@@ -1,0 +1,71 @@
+import sys
+from queue import *
+from collections import *
+
+BOARD_SIZE = int(input("Enter board size: "))
+stack=[] # For storing all assignments made
+conflictqueens=[BOARD_SIZE*BOARD_SIZE]*BOARD_SIZE # list for storing the number of conflicts for each queen in row
+
+q=Queue()# intializing queue for arc consistency
+variables=list(range(BOARD_SIZE)) # list of variables
+domain=[] # domain of variables
+for var in variables: # initialize domains for each variable
+    domain.append(list(range(BOARD_SIZE)))
+print(domain)
+q=deque([(x,y) for x in variables for y in variables if x!=y])
+for i in q:
+    print(i, end=" ")
+
+
+def conflicts(row,n,queens): # Counts the number of attacks 
+    count=0
+    for value in domain[row]:
+        if under_attack(value,queens):
+            count+=1
+    conflictqueens[row]=count
+
+def under_attack(col, queens):
+    return col in queens or \
+           any(abs(col - x) == len(queens)-i for i,x in enumerate(queens))
+ 
+def rsolve(queens,n):
+    global conflictqueens
+    if n == len(queens):
+        return queens
+    else:
+        constraint=q.popleft()
+        print("constraint ",constraint)
+        for i in domain[constraint[0]]:
+            print("domainConstraint0 ",i)
+            if not under_attack(i,queens):
+                print("not underattack ",i," ",queens)
+                conflicts(constraint[1],n,queens+[i])
+                print("conflictqueens ", conflictqueens)
+                if n in conflictqueens:
+                    print("remove ",i, "from domain of ",constraint[0], domain[constraint[0]])
+                    domain[constraint[0]].remove(i)
+                    q.append(constraint)
+                else:
+                    stack.append(i)
+                    newqueens = rsolve(queens+[i],n)
+                    print("newqueens= ",newqueens)
+                    if newqueens != []:
+                        return newqueens
+                conflictqueens=[BOARD_SIZE*BOARD_SIZE]*BOARD_SIZE    
+        return []
+def print_board(queens):
+    row = 0
+    n = len(queens)
+    for pos in queens:
+        for i in range(pos):
+            sys.stdout.write( ". ")
+        sys.stdout.write( "Q ")
+        for i in range((n-pos)-1):
+            sys.stdout.write( ". ")
+        print('\n')
+    
+ans = rsolve([],BOARD_SIZE)
+print_board(ans)
+print(stack) # Print all assignments made
+print('\n')
+print("Total number of assignments: ",len(stack))
